@@ -70,7 +70,7 @@ else
 # We are under other system, may be Linux. Assume using gcc.
 	# Can we use -fdata-sections?
 	ifndef COMPORT
-		ESPPORT = /dev/ttyUSB0
+		ESPPORT = /dev/ttyUSB1
 	else
 		ESPPORT = $(COMPORT)
 	endif
