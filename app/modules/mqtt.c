@@ -18,6 +18,8 @@
 #include "user_interface.h"
 
 // #define NODE_DBG_MY dbg_printf
+#define NODE_DBG_MY
+
 
 #define MQTT_BUF_SIZE 1024
 #define MQTT_DEFAULT_KEEPALIVE 60
