@@ -17,6 +17,8 @@
 
 #include "user_interface.h"
 
+// #define NODE_DBG_MY dbg_printf
+
 #define MQTT_BUF_SIZE 1024
 #define MQTT_DEFAULT_KEEPALIVE 60
 #define MQTT_MAX_CLIENT_LEN   64
@@ -89,6 +91,7 @@ static void mqtt_connack_fail(lmqtt_userdata * mud, int reason_code);
 static void mqtt_socket_disconnected(void *arg)    // tcp only
 {
   NODE_DBG("enter mqtt_socket_disconnected.\n");
+  NODE_DBG_MY("enter mqtt_socket_disconnected.\n");
   struct espconn *pesp_conn = arg;
   bool call_back = false;
   if(pesp_conn == NULL)
@@ -140,11 +143,13 @@ static void mqtt_socket_disconnected(void *arg)    // tcp only
   }
 
   NODE_DBG("leave mqtt_socket_disconnected.\n");
+  NODE_DBG_MY("leave mqtt_socket_disconnected.\n");
 }
 
 static void mqtt_socket_reconnected(void *arg, sint8_t err)
 {
   NODE_DBG("enter mqtt_socket_reconnected.\n");
+  NODE_DBG_MY("enter mqtt_socket_reconnected.\n");
   // mqtt_socket_disconnected(arg);
   struct espconn *pesp_conn = arg;
   if(pesp_conn == NULL)
@@ -176,6 +181,7 @@ static void mqtt_socket_reconnected(void *arg, sint8_t err)
     mqtt_socket_disconnected(arg);
   }
   NODE_DBG("leave mqtt_socket_reconnected.\n");
+  NODE_DBG_MY("leave mqtt_socket_reconnected.\n");
 }
 
 static void deliver_publish(lmqtt_userdata * mud, uint8_t* message, int length)
@@ -546,6 +552,7 @@ static void mqtt_socket_sent(void *arg)
 static void mqtt_socket_connected(void *arg)
 {
   NODE_DBG("enter mqtt_socket_connected.\n");
+  NODE_DBG_MY("enter mqtt_socket_connected.\n");
   struct espconn *pesp_conn = arg;
   if(pesp_conn == NULL)
     return;
@@ -578,6 +585,7 @@ static void mqtt_socket_connected(void *arg)
 
   mud->connState = MQTT_CONNECT_SENDING;
   NODE_DBG("leave mqtt_socket_connected.\n");
+  NODE_DBG_MY("leave mqtt_socket_connected.\n");
   return;
 }
 
@@ -982,6 +990,7 @@ static sint8 socket_dns_found(const char *name, ip_addr_t *ipaddr, void *arg)
 static int mqtt_socket_connect( lua_State* L )
 {
   NODE_DBG("enter mqtt_socket_connect.\n");
+  NODE_DBG_MY("enter mqtt_socket_connect.\n");
   lmqtt_userdata *mud = NULL;
   unsigned port = 1883;
   size_t il;
@@ -1127,6 +1136,7 @@ static int mqtt_socket_connect( lua_State* L )
   }
 
   NODE_DBG("leave mqtt_socket_connect.\n");
+  NODE_DBG_MY("leave mqtt_socket_connect.\n");
 
   if (espconn_status == ESPCONN_OK) {
     lua_pushboolean(L, 1);
@@ -1621,6 +1631,7 @@ static const LUA_REG_TYPE mqtt_socket_map[] = {
 
 static const LUA_REG_TYPE mqtt_map[] = {
   { LSTRKEY( "Client" ),                                LFUNCVAL( mqtt_socket_client ) },
+  { LSTRKEY( "delete" ),                                LFUNCVAL( mqtt_delete ) },
 
   { LSTRKEY( "CONN_FAIL_SERVER_NOT_FOUND" ),            LNUMVAL( MQTT_CONN_FAIL_SERVER_NOT_FOUND ) },
   { LSTRKEY( "CONN_FAIL_NOT_A_CONNACK_MSG" ),           LNUMVAL( MQTT_CONN_FAIL_NOT_A_CONNACK_MSG ) },
