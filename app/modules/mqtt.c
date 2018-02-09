@@ -271,6 +271,7 @@ static sint8 mqtt_send_if_possible(struct espconn *pesp_conn)
   return espconn_status;
 }
 
+
 static uint32_t rtc_time_cali=0;
 static uint32_t last_rtc_time=0;
 static uint64_t last_rtc_time_us=0;
@@ -288,16 +289,6 @@ static uint64_t rtc_timer_update(bool do_calibration){
 	uint32_t us_since_last = rtc2usec(since_last);
 	uint64_t now = last_rtc_time_us + us_since_last;
 
-    // dbg_printf("\nrtc_time_cali:%lu\n", rtc_time_cali);
-    // dbg_printf("last_rtc_time:%lu\n", last_rtc_time);
-    // dbg_printf("last_rtc_time_us:%llu\n", last_rtc_time_us);
-    // dbg_printf("current:%lu\n", current);
-    // dbg_printf("since_last:%lu\n", since_last);
-    // dbg_printf("us_since_last:%lu\n", us_since_last);
-    
-    dbg_printf("\nnow:%u\n", now/1000000);
-
-
 	// Only update if at least 100ms has passed since we last updated.
 	// This prevents the rounding errors in rtc2usec from accumulating
 	if (us_since_last >= 100000)
@@ -308,13 +299,15 @@ static uint64_t rtc_timer_update(bool do_calibration){
 	return now;
 }
 
-
-
+static unsigned int received_cnt = 0;
 
 static void mqtt_socket_received(void *arg, char *pdata, unsigned short len)
 {
   NODE_DBG("enter mqtt_socket_received.\n");
-//   dbg_printf("enter mqtt_socket_received.\n");
+  
+  uint64_t us;
+  us = rtc_timer_update(false);
+  dbg_printf("%d enter mqtt_socket_received - %d\n", received_cnt, cast_int(us/1000000));
 
   uint8_t msg_type;
   uint8_t msg_qos;
@@ -445,6 +438,10 @@ READPACKET:
           }
           break;
         case MQTT_MSG_TYPE_PUBLISH:
+    
+            us = rtc_timer_update(false);
+            dbg_printf("%d mqtt_socket_received: MQTT_MSG_TYPE_PUBLISH - %d\n", received_cnt, cast_int(us/1000000));
+
           if(msg_qos == 1){
             temp_msg = mqtt_msg_puback(&mud->mqtt_state.mqtt_connection, msg_id);
             msg_enqueue(&(mud->mqtt_state.pending_msg_q), temp_msg,
@@ -452,14 +449,16 @@ READPACKET:
           }
           else if(msg_qos == 2){
 
-
-            // uint64_t us = rtc_timer_update(true);
-            // dbg_printf("\n%llu: mqtt_socket_received: call mqtt_msg_pubrec\n", us/1000000);
-
+            us = rtc_timer_update(false);
+            dbg_printf("%d mqtt_socket_received: befor mqtt_msg_pubrec - %d\n", received_cnt, cast_int(us/1000000));
 
             temp_msg = mqtt_msg_pubrec(&mud->mqtt_state.mqtt_connection, msg_id);
             msg_enqueue(&(mud->mqtt_state.pending_msg_q), temp_msg,
                       msg_id, MQTT_MSG_TYPE_PUBREC, (int)mqtt_get_qos(temp_msg->data) );
+
+            us = rtc_timer_update(false);
+            dbg_printf("%d mqtt_socket_received: after mqtt_msg_pubrec - %d\n", received_cnt, cast_int(us/1000000));
+
           }
           if(msg_qos == 1 || msg_qos == 2){
             NODE_DBG("MQTT: Queue response QoS: %d\r\n", msg_qos);
@@ -547,7 +546,10 @@ READPACKET:
 
   mqtt_send_if_possible(pesp_conn);
   NODE_DBG("leave mqtt_socket_received.\n");
-//   dbg_printf("leave mqtt_socket_received.\n");
+
+  us = rtc_timer_update(false);
+  dbg_printf("%d leave mqtt_socket_received - %d\n", received_cnt, cast_int(us/1000000));
+  ++received_cnt;
   return;
 }
 
